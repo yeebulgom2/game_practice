@@ -70,7 +70,7 @@ public class PlayerMovement : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
 
-        if (collision.gameObject.CompareTag("DeadZone") && collision.gameObject.CompareTag("enemy"))
+        if (collision.gameObject.CompareTag("DeadZone"))
         {
             CurrentHp -= 1;
             rb.velocity = new Vector2(rb.velocity.x, jumpForce * 1.5f);
