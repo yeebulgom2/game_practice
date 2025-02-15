@@ -20,7 +20,7 @@ public class PlayerMovement : MonoBehaviour
     private int jumpCount = 0;       // 현재 점프 횟수
     private bool isGrounded = false; // 바닥에 닿아있는지 확인
     private bool isDead = false;     // HP가 0이거나 y좌표가 -10보다 낮은지 확인
-    
+    Animator anim;
     
     void Start()
     {
@@ -28,6 +28,7 @@ public class PlayerMovement : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         playerSpriteRenderer = GetComponent<SpriteRenderer>();
         CurrentHp = MaxHp;
+        anim = GetComponent<Animator>();
     }
 
     void Update()
@@ -51,8 +52,14 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             jumpCount++;
-        }
 
+            
+
+        }
+        if (rb.velocity.x == 0)
+            anim.SetBool("iswalking", false);
+        else
+            anim.SetBool("iswalking", true);
         CheckBoundary();
     }
 
@@ -61,7 +68,7 @@ public class PlayerMovement : MonoBehaviour
         // 바닥과 충돌 시 점프 횟수 초기화(수정 필요)
         if (collision.gameObject.CompareTag("Ground")|| collision.gameObject.CompareTag("enemy"))
         {
-            isGrounded = true;
+            updateIsGrounded(true);
             jumpCount = 0;
         }
         
@@ -98,7 +105,7 @@ public class PlayerMovement : MonoBehaviour
         // 바닥에서 떨어질 때 상태 변경(수정 필요)
         if (collision.gameObject.CompareTag("Ground"))
         {
-            isGrounded = false;
+            updateIsGrounded(false);
         }
 
     }
@@ -118,5 +125,11 @@ public class PlayerMovement : MonoBehaviour
             HpBarSlider.value = 1.0F;
             isDead = false;
         }
+    }
+
+    private void updateIsGrounded(bool flag)
+    {
+        isGrounded = flag;
+        anim.SetBool("isGrounded", flag);
     }
 }
