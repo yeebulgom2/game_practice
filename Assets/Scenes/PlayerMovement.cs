@@ -53,8 +53,11 @@ public class PlayerMovement : MonoBehaviour
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             jumpCount++;
 
-            
-
+            updateIsGrounded(true);
+        }
+        else if(jumpCount == maxJumpCount)
+        {
+            updateIsGrounded(false);
         }
         if (rb.velocity.x == 0)
             anim.SetBool("iswalking", false);
@@ -103,7 +106,7 @@ public class PlayerMovement : MonoBehaviour
     private void OnCollisionExit2D(Collision2D collision)
     {
         // 바닥에서 떨어질 때 상태 변경(수정 필요)
-        if (collision.gameObject.CompareTag("Ground"))
+        if (collision.gameObject.CompareTag("Ground")|| collision.gameObject.CompareTag("enemy"))
         {
             updateIsGrounded(false);
         }
