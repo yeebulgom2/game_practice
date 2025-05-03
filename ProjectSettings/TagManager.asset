@@ -9,6 +9,7 @@ TagManager:
   - player
   - enemy
   - CheckPoint
+  - Wall
   layers:
   - Default
   - TransparentFX
