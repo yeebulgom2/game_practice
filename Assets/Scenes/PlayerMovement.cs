@@ -1,11 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Tilemaps;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
     private SpriteRenderer playerSpriteRenderer;  // 플레이어 이미지 스프라이트
+    [SerializeField] private float knockbackSpeed = 100f;
+    private Vector2 knockbackDir;
+    private bool isKnockback = false;
+    private float knockbackTime = 0.05f; // 밀려나는 시간
+    private float knockbackTimer = 0f;
     public float moveSpeed = 5f;     // 캐릭터 이동 속도
     public float jumpForce = 10f;    // 점프 힘
     public int maxJumpCount = 2;     // 최대 점프 횟수
@@ -13,6 +19,8 @@ public class PlayerMovement : MonoBehaviour
     public int CurrentHp;            // 현재 히트포인트
     public Transform player;         // player객체 위치
     public Vector2 resetPosition;    // 위치 초기값
+    private float playerX = 1;
+    
 
     public Slider HpBarSlider; // HP바 컴포넌트
 
@@ -32,10 +40,31 @@ public class PlayerMovement : MonoBehaviour
     }
 
     void Update()
-    {
+    {     
+        if (isKnockback)
+        {
+            rb.velocity = knockbackDir * knockbackSpeed;
+
+            knockbackTimer += Time.deltaTime;
+            if (knockbackTimer >= knockbackTime)
+            {
+                isKnockback = false;
+                knockbackTimer = 0f;
+            }
+
+
+        }
+
+        //Debug.Log(Vector2.left.ToString() + " " + Vector2.right.ToString());
+
         // 좌우 이동
         float moveX = Input.GetAxis("Horizontal");
-        rb.velocity = new Vector2(moveX * moveSpeed, rb.velocity.y);
+
+        playerX = moveX;
+
+        if (isGrounded)
+            rb.velocity = new Vector2(moveX * moveSpeed, rb.velocity.y);
+
         if(moveX < 0)
         {
             playerSpriteRenderer.flipX = true;
@@ -45,6 +74,12 @@ public class PlayerMovement : MonoBehaviour
             playerSpriteRenderer.flipX = false;
         }
         
+        // 장외 사망처리
+        if(transform.position.y < -10)
+        {
+            isfallen();
+        }
+
 
         // 점프 입력 처리
         if (Input.GetKeyDown(KeyCode.UpArrow) && jumpCount < maxJumpCount)
@@ -68,10 +103,29 @@ public class PlayerMovement : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         // 바닥과 충돌 시 점프 횟수 초기화(수정 필요)
-        if (collision.gameObject.CompareTag("Ground")|| collision.gameObject.CompareTag("enemy"))
+        if (collision.gameObject.CompareTag("Ground"))
         {
             updateIsGrounded(true);
             jumpCount = 0;
+        }
+        // 적과 충돌했을시에 실행하는것
+        if (collision.gameObject.CompareTag("enemy"))
+        {
+
+            jumpCount = 2;
+
+            Vector2 enemyPos = collision.transform.position;
+            Vector2 playerPos = transform.position;
+
+            // Enemy가 어느 쪽에 있는지 확인
+            float angleDeg = (enemyPos.x > playerPos.x) ? 165f : 15f;
+            // 넉백
+            float angleRad = angleDeg * Mathf.Deg2Rad;
+            knockbackDir = new Vector2(Mathf.Cos(angleRad), Mathf.Sin(angleRad)).normalized;
+
+            isKnockback = true;
+            
+            
         }
         
     }
@@ -82,8 +136,7 @@ public class PlayerMovement : MonoBehaviour
         if (collision.gameObject.CompareTag("DeadZone"))
         {
             CurrentHp -= 1;
-            rb.velocity = new Vector2(rb.velocity.x, jumpForce * 1.5f);
-
+          
             if (CurrentHp <= 0)
             {
                 isDead = true;
@@ -97,8 +150,8 @@ public class PlayerMovement : MonoBehaviour
         // 체크포인트 접촉시 현 플레이어 위치를 resetPosition에 저장
         if(collision.gameObject.CompareTag("CheckPoint"))
         {
-            Vector2 currentPosition = transform.position;
-            resetPosition = currentPosition;
+            Vector2 checkptPos = collision.transform.position;
+            resetPosition = checkptPos;
         }
     }
 
@@ -122,9 +175,12 @@ public class PlayerMovement : MonoBehaviour
 
         if (isDead)
         {
+            rb.velocity = new Vector2(0,0);
+            rb.angularVelocity = 0f;
             transform.position = new Vector2(resetPosition.x, resetPosition.y);
             CurrentHp = MaxHp;
             HpBarSlider.value = 1.0F;
+            isKnockback = false;
             isDead = false;
         }
     }
@@ -133,5 +189,11 @@ public class PlayerMovement : MonoBehaviour
     {
         isGrounded = flag;
         anim.SetBool("isGrounded", flag);
+    }
+
+    private void isfallen()
+    {
+        isDead = true;
+        //Debug.Log("떨어짐");
     }
 }
