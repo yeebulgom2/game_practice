@@ -20,7 +20,6 @@ public class PlayerMovement : MonoBehaviour
     public Transform player;         // player객체 위치
     public Vector2 resetPosition;    // 위치 초기값
     private float playerX = 1;
-    
 
     public Slider HpBarSlider; // HP바 컴포넌트
 
@@ -93,6 +92,14 @@ public class PlayerMovement : MonoBehaviour
         {
             updateIsGrounded(false);
         }
+
+        // 공중에서 아래 화살표 입력시 하강   
+        if (Input.GetKeyDown(KeyCode.DownArrow) && !isGrounded && !isKnockback)
+        {
+            rb.velocity = new Vector2(0 , jumpForce * 0.2f);
+            rb.velocity = new Vector2(0 , -jumpForce * 2f);
+        }
+
         if (rb.velocity.x == 0)
             anim.SetBool("iswalking", false);
         else
@@ -105,6 +112,7 @@ public class PlayerMovement : MonoBehaviour
         // 바닥과 충돌 시 점프 횟수 초기화(수정 필요)
         if (collision.gameObject.CompareTag("Ground"))
         {
+            isKnockback = false;
             updateIsGrounded(true);
             jumpCount = 0;
         }
